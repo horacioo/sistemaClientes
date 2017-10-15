@@ -13,31 +13,20 @@ and open the template in the editor.
     </head>
     <body>
         <div>
-
-            lista de clientes
-            <div ng-app="">
-                {{9+9}}
-                <table>
-                    <thead>
-
-                    </thead>
-                    <tr>
-                        <td>cliente 1</td>
-                        <td>email</td>
-                        <td>telefone</td>
-                        <td>cpf</td>
-                        <td>capital</td>
-                        <td>mensal</td>
-                    </tr><tr>
-                        <td>cliente 2</td>
-                        <td>email</td>
-                        <td>telefone</td>
-                        <td>cpf</td>
-                        <td>capital</td>
-                        <td>mensal</td>
-                    </tr>
-                </table>
-            </div>
+            <h1>formulário</h1>
+            <form action="http://planet1.com.br/json-aplicativo/json-cadastro.php" method="post" name="dados">
+                <p>nome<input type="text" name=dados[cadastro][nome]></p>
+                <p>login<input type="text" name=dados[cadastro][login]></p>
+                <p>senha<input type="text" name=dados[cadastro][senha]></p>
+                <p>cpf<input type="text" name=dados[cadastro][cpf]></p>
+                
+                <p>email<input type="text" name=dados[email][]></p>
+                <p>email<input type="text" name=dados[email][]></p>
+                <p>telefone<input type="text" name=dados[telefone][]></p>
+                <p>telefone<input type="text" name=dados[telefone][]></p>
+                
+                <input type="submit" value="cadastrar">
+            </form>
         </div>
         <script>
            
