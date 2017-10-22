@@ -6,10 +6,13 @@ if (isset($_REQUEST)):
     require 'classe/conex.php';
     require_once 'classe/cadastro.php';
 
-   ///print_r($_REQUEST['dados']);
-
     $x       = new cadastro($_REQUEST['dados']);
+    
     $x->cadastra();
+    $x->CadastraEmail();
+    $x->CadastraTelefone();
+    $x->Associa();
+    
     
     $retorno = array("mensagem" => $x->mensagem);
     echo json_encode($retorno);

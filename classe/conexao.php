@@ -1,8 +1,8 @@
 <?php
-$servidor = '108.167.132.48';
-$usuario = 'plane827_app';
-$senha = 'fanzine2017';
-$banco = 'plane827_app';
+
+require_once 'variaveis.php';
+
+
 // Conecta-se ao banco de dados MySQL
 $mysqli = new mysqli($servidor, $usuario, $senha, $banco);
 

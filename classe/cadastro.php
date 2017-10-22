@@ -25,18 +25,16 @@ class cadastro extends conex {
     private $ConjuntoDeDadosAssociacao;
 
     public function __construct($dados = '') {
-        $this->arrayDados = array("cadastro", "email", "telefone");
-        $this->mensagem   = "ok";
-
+        $this->mensagem = "ok";
         if (is_array($dados)) {
             $this->entradaDados = $dados;
             $this->vinculo      = 0;
         }
-        $this->conn        = $this->Conex();
-        $this->id          = 0;
-        $this->id_cliente  = 0;
-        $this->email_id    = 0;
-        $this->telefone_id = 0;
+        $this->conn       = $this->Conex();
+        $this->id         = 0;
+        $this->id_cliente = 0;
+        //$this->email_id    = 0;
+        //$this->telefone_id = 0;
     }
 
 
@@ -50,12 +48,8 @@ class cadastro extends conex {
 
     public function cadastra($x = '') {
         $dados = $this->entradaDados;
-        foreach ($this->arrayDados as $d):
-//--------------------------
-            $this->CriaEconsulta($dados[$d], $d);
-//--------------------------
-        endforeach;
-        $this->AssociaDados();
+        $this->CadastraUsuario($this->entradaDados['cadastro']);
+        echo $this->id_cliente;
     }
 
 
@@ -67,107 +61,24 @@ class cadastro extends conex {
 
 
 
-    private function AssociaDados() {
-        $cadastro = $this->ConjuntoDeDadosAssociacao['cadastro'];
-        unset($this->ConjuntoDeDadosAssociacao['cadastro']);
-        foreach ($this->arrayDados as $dados):
-            $x = $this->ConjuntoDeDadosAssociacao[$dados];
-            if (is_array($x)):
-                foreach ($x as $zz):
-                    $sel = "insert into `cadastro-" . $dados . "` (cadastro,email) values('" . $cadastro . "','" . $zz . "')";
-                    $this->conn->query($sel);
-                endforeach;
+    private function CadastraUsuario($usuario = '') {
+        if (isset($usuario['id'])):
+        else:
+            $senha       = hash('whirlpool', $this->Limpeza($usuario['senha']));
+            $this->senha = $senha;
+            /*             * *********** */
+            $sel         = "where cpf='" . $usuario['cpf'] . "' and login='" . $usuario['login'] . "' and senha='$senha' ";
+            $this->VerificaExistencia("cadastro", $sel);
+            if ($this->id_cliente === 0):
+                $ins                           = "insert into cadastro(nome,login,senha,cpf,rg,data_nascimento,data_expedicao) values('" . $usuario['nome'] . "','" . $usuario['login'] . "','" . $senha . "','" . $usuario['cpf'] . "','" . $usuario['rg'] . "','" . $usuario['data_nascimento'] . "','" . $usuario['data_expedicao'] . "')";
+                $x                             = $this->conn->query($ins);
+                $this->id_cliente              = $this->conn->insert_id;
+                $this->loopDados['cadastro'][] = $this->conn->insert_id;
+            else:
+                $this->loopDados['cadastro'] = $this->id_cliente;
             endif;
-        endforeach;
-    }
+        /*         * *********** */
 
-
-
-
-
-
-
-
-
-
-    private function CriaEconsulta($x = '', $type = '') {
-        $chave = array_keys($x);
-        switch ($type):
-            case "cadastro": {
-                    $this->nome           = $this->Limpeza($x['nome']);
-                    $this->cpf            = $this->Limpeza($x['cpf']);
-                    $this->login          = $this->Limpeza($x['login']);
-                    $this->rg             = $this->Limpeza($x['rg']);
-                    $this->nascimento     = $this->Limpeza($x['data_nascimento']);
-                    $this->data_expedicao = $this->Limpeza($x['	data_expedicao']);
-                    $this->senha          = hash('whirlpool', $this->Limpeza($x['senha']));
-                    $this->ProcessaDados(array("type" => "cadastro"));
-                }break;
-            case"email": {
-                    foreach ($x as $email):
-                        $this->email = $email;
-                        $this->ProcessaDados(array("type" => "email", "email" => $this->email));
-                    endforeach;
-                } break;
-            case"telefone": {
-                    foreach ($x as $telefone):
-                        $this->telefone = $telefone;
-                        $this->ProcessaDados(array("type" => "telefone", "telefone" => $this->telefone));
-                    endforeach;
-                } break;
-        endswitch;
-    }
-
-
-
-
-
-
-
-
-
-
-    /*     * * enviar os dados no formato array('type'=>"cadastro");*  */
-
-    private function ProcessaDados($info) {
-        if (is_array($info)):
-            $consultas = $this->DecideQuery($info['type']);
-            print_r($consultas);
-            /*             * ************************** */
-            $x         = $this->conn->query($consultas['procura']);
-            while ($dados     = mysqli_fetch_array($x)):
-                switch ($info['type']):
-                    case "cadastro": {
-                            $this->id_cliente                            = $dados['id'];
-                            $this->ConjuntoDeDadosAssociacao['cadastro'] = $dados['id'];
-                        }
-                        break;
-                    case "email": {
-                            $this->ConjuntoDeDadosAssociacao['email'][] = $dados['id'];
-                            $this->email_id                             = $dados['id'];
-                        } break;
-                    case "telefone": {
-                            $this->telefone_id                             = $dados['id'];
-                            $this->ConjuntoDeDadosAssociacao['telefone'][] = $dados['id'];
-                        } break;
-                        break;
-                endswitch;
-            endwhile;
-
-
-            /*             * ************************** */
-            if ($this->id_cliente === 0) {
-                $this->conn->query($consultas['insere']);
-            }
-            if ($this->email_id === 0) {
-                //echo "<hr>insere " . $consultas['insere'];
-                $this->conn->query($consultas['insere']);
-            }
-            if ($this->telefone_id === 0) {
-                //echo "<hr>insere " . $consultas['insere'];
-                $this->conn->query($consultas['insere']);
-            }
-        /*         * ************************** */
         endif;
     }
 
@@ -180,35 +91,14 @@ class cadastro extends conex {
 
 
 
-    /*     * *********** */
-
-    private function DecideQuery($x = "") {
-
-        switch ($x):
-            case "cadastro": {
-                    $dados = array(
-                        "procura" => "select * from cadastro where cpf = '" . $this->cpf . "' and login ='" . $this->login . "' and senha='" . $this->senha . "'",
-                        "insere"  => "insert into cadastro(nome,login,senha,cpf,rg,data_nascimento,data_expedicao) values('" . $this->nome . "','" . $this->login . "','" . $this->senha . "','" . $this->cpf . "','" . $this->rg . "','" . $this->nascimento . "','" . $this->data_expedicao . "')"
-                    );
-                    return $dados;
-                }
-                break;
-            case "email": {
-                    $dados = array(
-                        "procura" => "select * from email where email = '" . $this->email . "'",
-                        "insere"  => "insert into email(email) values('" . $this->email . "')"
-                    );
-                    return $dados;
-                }break;
-            case "telefone": {
-                    $dados = array(
-                        "procura" => "select * from telefone where telefone = '" . $this->telefone . "'",
-                        "insere"  => "insert into telefone(telefone) values('" . $this->telefone . "')"
-                    );
-                    return $dados;
-                }break;
-
-        endswitch;
+    public function CadastraEmail() {
+        $this->chave = 0;
+        if (isset($email['id'])) {
+            
+        } else {
+            $array = $this->entradaDados['email'];
+            $this->insere("email", "email", $array);
+        }
     }
 
 
@@ -220,14 +110,143 @@ class cadastro extends conex {
 
 
 
-    protected function Query($x = "") {
-        $query = $this->conn;
-        //echo "<br>" . $x . "<br>";
-        if ($query->query($x)) {
-            return $query;
+    public function CadastraTelefone() {
+        if (isset($telefone['id'])) {
+            
         } else {
-            $this->mensagem = $query->error;
+            $array = $this->entradaDados['telefone'];
+            $this->insere("telefone", "telefone", $array);
         }
+        //print_r($this->loopDados);
+    }
+
+
+
+
+
+
+
+
+
+
+    public function Associa() {
+        print_r($this->loopDados);
+        $usuario  = $this->id_cliente;//$this->loopDados['cadastro'];
+        $email    = $this->loopDados['email'];
+        $telefone = $this->loopDados['telefone'];
+        
+        if($usuario > 0){}else{exit();}
+        
+        foreach ($email as $e):
+            $tabela = "`cadastro-email`";
+            $sel    = "where cadastro = '$usuario' and email= '$e'";
+            $this->VerificaExistencia($tabela, $sel);
+            if ($this->chave === 0):
+                $insert = "insert into $tabela (cadastro,email)values('" . $usuario . "','" . $e . "')";
+                //echo "<br> $insert";
+                $this->conn->query($insert);
+            endif;
+            $this->chave=0;
+        endforeach;
+        foreach ($telefone as $e):
+            $tabela = "`cadastro-telefone`";
+            $sel    = "where cadastro = '$usuario' and telefone= '$e'";
+            $this->VerificaExistencia($tabela, $sel);
+            if ($this->chave === 0):
+                $insert = "insert into $tabela (cadastro,telefone)values('" . $usuario . "','" . $e . "')";
+                //echo "<br> $insert";
+                $this->conn->query($insert);
+            endif;
+            $this->chave=0;
+        endforeach;
+    }
+
+
+
+
+
+
+
+
+
+
+    private function insere($tabela = '', $tipo = '', $array = '') {
+        foreach ($array as $valor):
+            if (!empty($valor)) {
+                ///////////////////////////////////////
+                switch ($tabela):
+                    case "email": $this->email_id    = 0;
+                        break;
+                    case "telefone": $this->telefone_id = 0;
+                        break;
+                endswitch;
+                $sel = "where $tabela='" . $valor . "'";
+                $this->VerificaExistencia($tabela, $sel);
+                if ($this->chave === 0):
+                    $ins = "insert into $tabela($tipo) values('" . $valor . "')";
+                    $x   = $this->conn->query($ins);
+                    switch ($tabela):
+                        case "cadastro": {
+                                $this->id_cliente              = $this->conn->insert_id;
+                                $this->loopDados['cadastro'][] = $this->conn->insert_id;
+                            } break;
+                        case "email": {
+                                $this->email_id             = $this->conn->insert_id;
+                                $this->loopDados['email'][] = $this->conn->insert_id;
+                            } break;
+                        case "telefone": {
+                                $this->telefone_id             = $this->conn->insert_id;
+                                $this->loopDados['telefone'][] = $this->conn->insert_id;
+                            }break;
+                    endswitch;
+                else: $this->loopDados[$tabela][] = $this->chave;
+                endif;
+                $this->chave = 0;
+                ///////////////////////////////////////
+            }
+        endforeach;
+    }
+
+
+
+
+
+
+
+
+
+
+    private $chave = 0;
+    private function VerificaExistencia($tabela = '', $consulta = '') {
+        $sel   = "select * from " . $tabela . " " . $consulta;  ///echo"<br><br>$sel";
+        $x     = $this->conn->query($sel);
+        while ($dados = mysqli_fetch_array($x)):
+
+            if ($dados['id'] > 0 && !is_null($dados['id'])) {
+                if (is_numeric($dados['id'])):
+
+                    $this->chave = $dados['id'];  ///echo"<hr>$sel"; echo"<br>a chave é ".$this->chave;
+
+                    switch ($tabela):
+                        case "cadastro": {
+                                $this->id_cliente = $dados['id'];
+                                $this->chave      = $dados['id'];
+                            }
+                            break;
+                        case "email": {
+                                $this->email_id = $dados['id'];
+                                $this->chave    = $dados['id'];
+                            }
+                            break;
+                        case "telefone": {
+                                $this->telefone_id = $dados['id'];
+                                $this->chave       = $dados['id'];
+                            }
+                            break;
+                    endswitch;
+                endif;
+            }
+        endwhile;
     }
 
 
